@@ -36,15 +36,18 @@ class Log4jHandler(asyncore.dispatcher_with_send):
         return
 
     def handle_read(self):
-        self.data += self.recv(4096)
-        self.send(b'HTTP/1.1 200 OK\r\nContent-Length: %d\r\nServer: %s\r\n\r\n%s' %
-                  (len(config['server_msg']), config['server_name'], config['server_msg']))
-        self.handle_close()
-        self.data = self.data.replace(b'\r', b'')
-        for line in self.data.split(b'\n'):
-            line = urllib.parse.unquote(line.decode('utf-8'))
-            if line.find('${') != -1:
-                self.logger.info(line)
+        try:
+            self.data += self.recv(4096)
+            self.send(b'HTTP/1.1 200 OK\r\nContent-Length: %d\r\nServer: %s\r\n\r\n%s' %
+                      (len(config['server_msg']), config['server_name'], config['server_msg']))
+            self.handle_close()
+            self.data = self.data.replace(b'\r', b'')
+            for line in self.data.split(b'\n'):
+                line = urllib.parse.unquote(line.decode('utf-8'))
+                if line.find('${') != -1:
+                    self.logger.info(line)
+        except Exception:
+            self.logger.info(f"Exception catch - {line}")
 
     def handle_close(self):
         self.close()
